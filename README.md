@@ -17,9 +17,9 @@ Smaller Keys: Provides equivalent security to RSA with much smaller key sizes (e
 Built-in Integrity: Unlike basic RSA encryption, ECIES includes mandatory authentication to prevent chosen-ciphertext attacks
 **********************************
 how to use the app
+
  &&&&&&&&&  Frist &&&&&&&&&&&&&&&&&
 use CMD to run the app java -jar ECIES.jar
-first page 
 
 it shown Pubic Key and Private Key
 Generate keys help you to change your Pubic Key and Private Key to get new one
