@@ -1,0 +1,356 @@
+import javax.crypto.*;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.swing.*;
+import java.awt.*;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.interfaces.*;
+import java.security.spec.*;
+import java.util.Arrays;
+
+public class ECIESApp extends JFrame {
+
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel mainPanel = new JPanel(cardLayout);
+
+    // Intro keys
+    private JTextField introPubKeyField = new JTextField(40);
+    private JTextField introPrivKeyField = new JTextField(40);
+
+    // Encrypt page
+    private JTextField pubKeyEncryptField = new JTextField(40);
+    private JTextArea messageEncryptArea = new JTextArea(5, 30);
+    private JTextArea encryptOutputArea = new JTextArea(5, 30);
+
+    // Decrypt page
+    private JTextField privKeyDecryptField = new JTextField(40);
+    private JTextArea cipherDecryptArea = new JTextArea(5, 30);
+    private JTextArea decryptOutputArea = new JTextArea(5, 30);
+
+    public ECIESApp() {
+        setTitle("ECIES GUI Tool");
+        setSize(750, 650);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        mainPanel.add(createIntroPanel(), "intro");
+        mainPanel.add(createEncryptPanel(), "encrypt");
+        mainPanel.add(createDecryptPanel(), "decrypt");
+
+        add(mainPanel);
+        cardLayout.show(mainPanel, "intro");
+    }
+
+    // ================= INTRO PAGE =================
+    private JPanel createIntroPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel form = new JPanel(new GridLayout(6, 1, 5, 5));
+
+        form.add(new JLabel("Public Key:"));
+        form.add(introPubKeyField);
+
+        form.add(new JLabel("Private Key:"));
+        form.add(introPrivKeyField);
+
+        JButton generateBtn = new JButton("Generate Keys");
+
+        generateBtn.addActionListener(e -> generateKeys());
+
+        JButton encBtn = new JButton("Go Encrypt");
+        JButton decBtn = new JButton("Go Decrypt");
+
+        encBtn.addActionListener(e -> {
+            pubKeyEncryptField.setText(introPubKeyField.getText().trim());
+            cardLayout.show(mainPanel, "encrypt");
+        });
+
+        decBtn.addActionListener(e -> {
+            privKeyDecryptField.setText(introPrivKeyField.getText().trim());
+            cardLayout.show(mainPanel, "decrypt");
+        });
+
+        JPanel btnPanel = new JPanel();
+        btnPanel.add(generateBtn);
+        btnPanel.add(encBtn);
+        btnPanel.add(decBtn);
+
+        panel.add(new JLabel("ECIES Encryption Tool", SwingConstants.CENTER), BorderLayout.NORTH);
+        panel.add(form, BorderLayout.CENTER);
+        panel.add(btnPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    // ================= ENCRYPT PAGE =================
+    private JPanel createEncryptPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel input = new JPanel(new GridLayout(4, 1));
+
+        input.add(new JLabel("Public Key:"));
+        input.add(pubKeyEncryptField);
+
+        input.add(new JLabel("Message:"));
+        input.add(new JScrollPane(messageEncryptArea));
+
+        JButton encryptBtn = new JButton("Encrypt");
+
+        encryptBtn.addActionListener(e -> doEncrypt());
+
+        encryptOutputArea.setLineWrap(true);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.add(encryptBtn, BorderLayout.NORTH);
+        bottom.add(new JScrollPane(encryptOutputArea), BorderLayout.CENTER);
+
+        JButton back = new JButton("Back");
+        JButton close = new JButton("Close");
+
+        back.addActionListener(e -> cardLayout.show(mainPanel, "intro"));
+        close.addActionListener(e -> System.exit(0));
+
+        JPanel nav = new JPanel();
+        nav.add(back);
+        nav.add(close);
+
+        panel.add(input, BorderLayout.NORTH);
+        panel.add(bottom, BorderLayout.CENTER);
+        panel.add(nav, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    // ================= DECRYPT PAGE =================
+    private JPanel createDecryptPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel input = new JPanel(new GridLayout(4, 1));
+
+        input.add(new JLabel("Private Key:"));
+        input.add(privKeyDecryptField);
+
+        input.add(new JLabel("Encrypted Message:"));
+        input.add(new JScrollPane(cipherDecryptArea));
+
+        JButton decryptBtn = new JButton("Decrypt");
+
+        decryptBtn.addActionListener(e -> doDecrypt());
+
+        decryptOutputArea.setLineWrap(true);
+
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.add(decryptBtn, BorderLayout.NORTH);
+        bottom.add(new JScrollPane(decryptOutputArea), BorderLayout.CENTER);
+
+        JButton back = new JButton("Back");
+        JButton close = new JButton("Close");
+
+        back.addActionListener(e -> cardLayout.show(mainPanel, "intro"));
+        close.addActionListener(e -> System.exit(0));
+
+        JPanel nav = new JPanel();
+        nav.add(back);
+        nav.add(close);
+
+        panel.add(input, BorderLayout.NORTH);
+        panel.add(bottom, BorderLayout.CENTER);
+        panel.add(nav, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    // ================= UTIL =================
+
+    private static byte[] hexToBytes(String hex) {
+        byte[] data = new byte[hex.length() / 2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            data[i / 2] = (byte) Integer.parseInt(hex.substring(i, i + 2), 16);
+        }
+        return data;
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+
+    private byte[] trim32(byte[] arr) {
+        byte[] res = new byte[32];
+        if (arr.length > 32) {
+            System.arraycopy(arr, arr.length - 32, res, 0, 32);
+        } else {
+            System.arraycopy(arr, 0, res, 32 - arr.length, arr.length);
+        }
+        return res;
+    }
+
+    private byte[] kdf(byte[] secret) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(secret);
+    }
+
+    // ================= KEY GENERATION =================
+    private void generateKeys() {
+        try {
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+            kpg.initialize(new ECGenParameterSpec("secp256r1"));
+            KeyPair kp = kpg.generateKeyPair();
+
+            ECPrivateKey priv = (ECPrivateKey) kp.getPrivate();
+            ECPublicKey pub = (ECPublicKey) kp.getPublic();
+
+            String privHex = String.format("%064x", priv.getS());
+
+            byte[] x = trim32(pub.getW().getAffineX().toByteArray());
+            byte[] y = trim32(pub.getW().getAffineY().toByteArray());
+
+            String pubHex = bytesToHex(x) + bytesToHex(y);
+
+            introPrivKeyField.setText(privHex);
+            introPubKeyField.setText(pubHex);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Key generation failed");
+        }
+    }
+
+    // ================= LOAD KEYS =================
+    private PublicKey loadPublicKey(String hex) throws Exception {
+        byte[] keyBytes = hexToBytes(hex);
+
+        AlgorithmParameters params = AlgorithmParameters.getInstance("EC");
+        params.init(new ECGenParameterSpec("secp256r1"));
+        ECParameterSpec ecSpec = params.getParameterSpec(ECParameterSpec.class);
+
+        byte[] x = Arrays.copyOfRange(keyBytes, 0, 32);
+        byte[] y = Arrays.copyOfRange(keyBytes, 32, 64);
+
+        ECPoint point = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
+
+        return KeyFactory.getInstance("EC")
+                .generatePublic(new ECPublicKeySpec(point, ecSpec));
+    }
+
+    private PrivateKey loadPrivateKey(String hex) throws Exception {
+        BigInteger s = new BigInteger(hex, 16);
+
+        AlgorithmParameters params = AlgorithmParameters.getInstance("EC");
+        params.init(new ECGenParameterSpec("secp256r1"));
+        ECParameterSpec ecSpec = params.getParameterSpec(ECParameterSpec.class);
+
+        return KeyFactory.getInstance("EC")
+                .generatePrivate(new ECPrivateKeySpec(s, ecSpec));
+    }
+
+    // ================= ENCRYPT =================
+    private String encrypt(String pubKeyHex, String message) throws Exception {
+
+        PublicKey receiverPub = loadPublicKey(pubKeyHex);
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        kpg.initialize(new ECGenParameterSpec("secp256r1"));
+        KeyPair ephPair = kpg.generateKeyPair();
+
+        KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+        ka.init(ephPair.getPrivate());
+        ka.doPhase(receiverPub, true);
+
+        byte[] aesKey = kdf(ka.generateSecret());
+
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        SecretKey key = new SecretKeySpec(aesKey, 0, 32, "AES");
+
+        cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(128, iv));
+
+        byte[] ciphertext = cipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
+
+        ECPublicKey ephPub = (ECPublicKey) ephPair.getPublic();
+
+        byte[] x = trim32(ephPub.getW().getAffineX().toByteArray());
+        byte[] y = trim32(ephPub.getW().getAffineY().toByteArray());
+
+        byte[] result = new byte[64 + 12 + ciphertext.length];
+
+        System.arraycopy(x, 0, result, 0, 32);
+        System.arraycopy(y, 0, result, 32, 32);
+        System.arraycopy(iv, 0, result, 64, 12);
+        System.arraycopy(ciphertext, 0, result, 76, ciphertext.length);
+
+        return bytesToHex(result);
+    }
+
+    // ================= DECRYPT =================
+    private String decrypt(String privKeyHex, String cipherHex) {
+        try {
+            byte[] input = hexToBytes(cipherHex.trim());
+
+            if (input.length < 76) return "Invalid ciphertext";
+
+            byte[] x = Arrays.copyOfRange(input, 0, 32);
+            byte[] y = Arrays.copyOfRange(input, 32, 64);
+            byte[] iv = Arrays.copyOfRange(input, 64, 76);
+            byte[] ciphertext = Arrays.copyOfRange(input, 76, input.length);
+
+            AlgorithmParameters params = AlgorithmParameters.getInstance("EC");
+            params.init(new ECGenParameterSpec("secp256r1"));
+            ECParameterSpec ecSpec = params.getParameterSpec(ECParameterSpec.class);
+
+            ECPoint point = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
+
+            PublicKey ephPub = KeyFactory.getInstance("EC")
+                    .generatePublic(new ECPublicKeySpec(point, ecSpec));
+
+            PrivateKey privKey = loadPrivateKey(privKeyHex);
+
+            KeyAgreement ka = KeyAgreement.getInstance("ECDH");
+            ka.init(privKey);
+            ka.doPhase(ephPub, true);
+
+            byte[] aesKey = kdf(ka.generateSecret());
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKey key = new SecretKeySpec(aesKey, 0, 32, "AES");
+
+            cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
+
+            byte[] plaintext = cipher.doFinal(ciphertext);
+
+            return new String(plaintext, StandardCharsets.UTF_8);
+
+        } catch (Exception e) {
+            return "Error: cannot decrypt";
+        }
+    }
+
+    // ================= BUTTON ACTIONS =================
+
+    private void doEncrypt() {
+        try {
+            String result = encrypt(pubKeyEncryptField.getText().trim(),
+                    messageEncryptArea.getText());
+            encryptOutputArea.setText(result);
+        } catch (Exception e) {
+            encryptOutputArea.setText("Encryption error");
+        }
+    }
+
+    private void doDecrypt() {
+        String result = decrypt(privKeyDecryptField.getText().trim(),
+                cipherDecryptArea.getText());
+        decryptOutputArea.setText(result);
+    }
+
+    // ================= MAIN =================
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new ECIESApp().setVisible(true));
+    }
+}
