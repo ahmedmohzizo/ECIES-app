@@ -16,35 +16,40 @@ Efficiency: Combines the security of public-key systems with the speed of symmet
 Smaller Keys: Provides equivalent security to RSA with much smaller key sizes (e.g., a 256-bit ECC key is comparable to a 3072-bit RSA key), reducing storage and bandwidth.
 Built-in Integrity: Unlike basic RSA encryption, ECIES includes mandatory authentication to prevent chosen-ciphertext attacks
 **********************************
+
+
 how to use the app
 
- &&&&&&&&&  Frist &&&&&&&&&&&&&&&&&
-use CMD to run the app java -jar ECIES.jar
 
-it shown Pubic Key and Private Key
-Generate keys help you to change your Pubic Key and Private Key to get new one
+ &&&&&&&&&  Frist &&&&&&&&&&&&&&&&&
+ 
+•	use CMD to run the app java -jar ECIES.jar
+
+•	It will show Pubic Key and Private Key
+
+•	Generate keys help you to change your Pubic Key and Private Key to get new one
+
 
 
 &&&&&&&&&  second  &&&&&&&&&&&&&&&&&
-if you choose Go Encrypt 
-your public key will copy and now you can write your massage
-donot forget to copey encrypt massage
+
+
+•	if you choose Go Encrypt .
+
+•	your public key will copy and now you can write your message.
+
+•	don’t forget to copy encrypt massage.
 
 
 &&&&&&&&&  third &&&&&&&&&&&&&&&&&
-After you copy the massage use back then choose go decrypt
-you will see your private key in top
-now you can past your massage and use decrypt
-Massage will show back
+
+
+•	After you copy the message back then choose go decrypt.
+
+•	you will see your private key in top.
+
+•	now you can past your massage and use decrypt.
+
+•	Massage will show back.
 
 ****************************
-
-
-i will add the jar ECIES with pic 
-
-
-enjoy
-
-
-
-
