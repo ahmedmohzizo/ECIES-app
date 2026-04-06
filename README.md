@@ -20,13 +20,17 @@ how to use the app
  &&&&&&&&&  Frist &&&&&&&&&&&&&&&&&
 use CMD to run the app java -jar ECIES.jar
 first page 
-<img width="2205" height="1926" alt="image" src="https://github.com/user-attachments/assets/7612f71d-0e2c-4792-aeb0-1fe3f710ee91" />
+
 it shown Pubic Key and Private Key
 Generate keys help you to change your Pubic Key and Private Key to get new one
+
+
 &&&&&&&&&  second  &&&&&&&&&&&&&&&&&
 if you choose Go Encrypt 
 your public key will copy and now you can write your massage
 donot forget to copey encrypt massage
+
+
 &&&&&&&&&  third &&&&&&&&&&&&&&&&&
 After you copy the massage use back then choose go decrypt
 you will see your private key in top
@@ -34,7 +38,11 @@ now you can past your massage and use decrypt
 Massage will show back
 
 ****************************
+
+
 i will add the jar ECIES with pic 
+
+
 enjoy
 
 
